@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Pacientes</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+  <!-- NAVBAR DINÁMICO -->
+  <div id="navbar"></div>
+
+  <script>
+    fetch('/navbar.html')
+      .then(response => response.text())
+      .then(data => { document.getElementById('navbar').innerHTML = data; })
+      .catch(error => console.error('Error cargando el navbar:', error));
+  </script>
+
+  <!-- MENÚ DINÁMICO POR TIPO DE USUARIO -->
+  <script>
+    fetch('/tipo-usuario')
+      .then(response => response.json())
+      .then(data => {
+        const menu = document.getElementById('menu');
+        const tipoUsuario = data.tipo_usuario;
+
+        if (tipoUsuario === 'admin') {
+          menu.innerHTML += '<li><a class="dropdown-item" href="/ver-usuarios">Ver Usuarios</a></li>';
+          menu.innerHTML += '<li><a class="dropdown-item" href="/medicos">Ver Médicos</a></li>';
+          menu.innerHTML += '<li><a class="dropdown-item" href="/mis-datos">Mis Datos</a></li>';
+          menu.innerHTML += '<li><a class="dropdown-item" href="/busqueda.html">Buscar usuario</a></li>';
+          menu.innerHTML += '<li><a class="dropdown-item" href="/equipos.html">Descargar equipos</a></li>';
+        } else if (tipoUsuario === 'medico') {
+          menu.innerHTML += '<li><a class="dropdown-item" href="/ordenar-pacientes">Pacientes por FC</a></li>';
+          menu.innerHTML += '<li><a class="dropdown-item" href="/pacientes">Ver Pacientes</a></li>';
+          menu.innerHTML += '<li><a class="dropdown-item" href="/mis-datos">Mis Datos</a></li>';
+        } else if (tipoUsuario === 'Paciente') {
+          menu.innerHTML += '<li><a class="dropdown-item" href="/mis-datos">Mis Datos</a></li>';
+        }
+
+        menu.innerHTML += '<li><a class="dropdown-item text-danger" href="/logout">Cerrar Sesión</a></li>';
+      })
+      .catch(error => console.error('Error obteniendo el tipo de usuario:', error));
+  </script>
+
+  <!-- CONTENIDO -->
+  <div class="container py-5">
+
+    <h1 class="text-center mb-4">Gestión de Pacientes</h1>
+    <p class="text-center">Esta plataforma permite administrar pacientes, médicos y equipos clínicos.</p>
+
+    <div class="row g-4">
+
+      <!-- FORM GUARDAR PACIENTE -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm p-4">
+          <h4 class="mb-3">Guardar nuevo paciente</h4>
+
+          <form action="/submit-data" method="POST">
+
+            <div class="mb-3">
+              <label class="form-label">Nombre del paciente</label>
+              <input type="text" class="form-control" name="name">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Edad</label>
+              <input type="number" class="form-control" name="age">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Frecuencia Cardiaca (bpm)</label>
+              <input type="number" class="form-control" name="heart_rate">
+            </div>
+
+            <button class="btn btn-primary w-100" type="submit">Guardar</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- FORM BUSCAR PACIENTE -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm p-4">
+          <h4 class="mb-3">Buscar Pacientes</h4>
+
+          <form action="/buscar-pacientes" method="GET">
+            <div class="mb-3">
+              <label class="form-label">Nombre del paciente</label>
+              <input type="text" class="form-control" name="name_search">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Edad del paciente</label>
+              <input type="number" class="form-control" name="age_search">
+            </div>
+
+            <button class="btn btn-secondary w-100" type="submit">Buscar</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- FORM REGISTRAR MÉDICO -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm p-4">
+          <h4 class="mb-3">Registrar Médico</h4>
+
+          <form action="/insertar-medico" method="POST">
+
+            <div class="mb-3">
+              <label class="form-label">Nombre del médico</label>
+              <input type="text" class="form-control" name="medico_name">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Especialidad</label>
+              <input type="text" class="form-control" name="especialidad">
+            </div>
+
+            <button class="btn btn-success w-100" type="submit">Guardar Médico</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- FORM REGISTRAR EQUIPO -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm p-4">
+          <h4 class="mb-3">Registrar Equipo</h4>
+
+          <form action="/insertar-equipo" method="POST">
+
+            <div class="mb-3">
+              <label class="form-label">Nombre del equipo</label>
+              <input type="text" class="form-control" name="nombre" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Descripción</label>
+              <input type="text" class="form-control" name="descripcion" required>
+            </div>
+
+            <button class="btn btn-warning w-100" type="submit">Guardar Equipo</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTONES DE ACCESO -->
+    <div class="text-center mt-4">
+      <button class="btn btn-outline-primary me-2" onclick="window.location.href='/pacientes'">Ver Pacientes Guardados</button>
+      <button class="btn btn-outline-success" onclick="window.location.href='/medicos'">Ver Médicos Guardados</button>
+    </div>
+
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
