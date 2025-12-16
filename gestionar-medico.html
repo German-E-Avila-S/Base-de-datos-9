@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Médicos</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f7f7f7;
+        }
+        .container {
+            max-width: 1100px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- NAVBAR DINÁMICO -->
+  <div id="navbar"></div>
+
+  <script>
+    fetch('/navbar.html')
+      .then(response => response.text())
+      .then(data => { document.getElementById('navbar').innerHTML = data; })
+      .catch(error => console.error('Error cargando el navbar:', error));
+  </script>
+
+  <!-- MENÚ DINÁMICO POR TIPO DE USUARIO -->
+  <script>
+    fetch('/tipo-usuario')
+      .then(response => response.json())
+      .then(data => {
+
+        const addItem = (html) => {
+          const menu = document.getElementById('menu');
+          if (menu) menu.innerHTML += html;
+        };
+
+        const tipoUsuario = data.tipo_usuario;
+
+        if (tipoUsuario === 'admin') {
+          addItem('<li><a class="dropdown-item" href="/gestionar-citas.html">Gestion Citas</a></li>');
+          addItem('<li><a class="dropdown-item" href="/mis-datos">Mis Datos</a></li>');
+          addItem('<li><a class="dropdown-item" href="/gestionar-usuarios.html">Gestion Usuarios</a></li>');
+          addItem('<li><a class="dropdown-item" href="/gestionar-pacientes.html">Gestion Pacientes</a></li>');
+          addItem('<li><a class="dropdown-item" href="/gestionar-medicos.html">Gestion Medicos</a></li>');
+        } else {
+          addItem('<li><a class="dropdown-item" href="/mis-datos">Mis Datos</a></li>');
+        }
+
+        addItem('<li><a class="dropdown-item text-danger" href="/logout">Cerrar Sesión</a></li>');
+      })
+      .catch(error => console.error('Error obteniendo el tipo de usuario:', error));
+  </script>
+    
+<div class="container mt-5">
+
+    <h1 class="text-center mb-4">Gestión de Médicos</h1>
+
+    <!-- BUSCADOR -->
+    <div class="mb-4">
+        <input type="text" id="buscador" class="form-control" placeholder="Buscar médico por ID o nombre...">
+    </div>
+
+    <!-- TABLA -->
+    <table class="table table-striped table-bordered shadow-sm" id="tablaMedicos">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Especialidad</th>
+            <th>Correo</th>
+            <th>Sueldo</th> <!-- NUEVA COLUMNA -->
+            <th>Acciones</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <!-- Dinámico -->
+        </tbody>
+    </table>
+
+    <a href="/" class="btn btn-secondary">Volver</a>
+
+</div>
+
+
+<!-- ------------------- MODAL EDITAR ------------------- -->
+<div class="modal fade" id="modalEditar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Editar Médico</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="formEditar">
+
+                    <input type="hidden" id="edit_id">
+
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" id="edit_nombre" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Apellido</label>
+                        <input type="text" id="edit_apellido" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Especialidad</label>
+                        <input type="text" id="edit_especialidad" class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Correo</label>
+                        <input type="email" id="edit_correo" class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Sueldo</label>
+                        <input type="number" id="edit_sueldo" class="form-control" step="0.01" min="0">
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">Guardar Cambios</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+
+<!-- ------------------- SCRIPT PRINCIPAL ------------------- -->
+<script>
+
+    const modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
+
+    // ------------------- Cargar tabla -------------------
+    function cargarTabla(medicos) {
+        const tbody = document.querySelector("#tablaMedicos tbody");
+        tbody.innerHTML = "";
+
+        medicos.forEach(m => {
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>${m.id}</td>
+                <td>${m.nombre}</td>
+                <td>${m.apellido}</td>
+                <td>${m.especialidad || ''}</td>
+                <td>${m.correo || ''}</td>
+                <td>$${m.sueldo != null ? m.sueldo : ''}</td>
+
+                <td>
+                    <button class="btn btn-primary btn-sm me-1"
+                            onclick='abrirEditar(${JSON.stringify(m)})'>
+                        Editar
+                    </button>
+
+                    <form action="/medicos/eliminar/${m.id}" method="POST" style="display:inline;">
+                        <button class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar médico?');">
+                            Eliminar
+                        </button>
+                    </form>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Cargar todos al inicio
+    fetch("/api/medicos/buscar?query=")
+        .then(res => res.json())
+        .then(cargarTabla);
+
+
+    // ------------------- BUSCADOR EN TIEMPO REAL -------------------
+    document.getElementById("buscador").addEventListener("input", function () {
+        const q = this.value;
+
+        fetch(`/api/medicos/buscar?query=${encodeURIComponent(q)}`)
+            .then(res => res.json())
+            .then(cargarTabla)
+            .catch(err => console.error("Error buscando:", err));
+    });
+
+
+
+    // ------------------- MODAL EDITAR -------------------
+    function abrirEditar(m) {
+        document.getElementById("edit_id").value = m.id;
+        document.getElementById("edit_nombre").value = m.nombre;
+        document.getElementById("edit_apellido").value = m.apellido;
+        document.getElementById("edit_especialidad").value = m.especialidad || '';
+        document.getElementById("edit_correo").value = m.correo || '';
+        document.getElementById("edit_sueldo").value = m.sueldo || '';
+
+        modalEditar.show();
+    }
+
+    // Guardar edición
+    document.getElementById("formEditar").addEventListener("submit", e => {
+        e.preventDefault();
+
+        const id = document.getElementById("edit_id").value;
+
+        const datos = {
+            nombre: document.getElementById("edit_nombre").value,
+            apellido: document.getElementById("edit_apellido").value,
+            especialidad: document.getElementById("edit_especialidad").value,
+            correo: document.getElementById("edit_correo").value,
+            sueldo: document.getElementById("edit_sueldo").value
+        };
+
+        fetch(`/medicos/editar/${id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        })
+            .then(res => {
+                if (res.ok) {
+                    alert("Médico actualizado correctamente");
+                    location.reload();
+                } else {
+                    alert("Error al actualizar médico");
+                }
+            });
+    });
+
+</script>
+
+</body>
+</html>
